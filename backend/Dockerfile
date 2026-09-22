@@ -18,6 +18,11 @@ COPY backend/requirements.txt ./backend/requirements.txt
 # Install all Python packages your backend needs
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
+# Explicitly make sure opencv is installed (main.py imports cv2, but it
+# wasn't listed in requirements.txt). "headless" version works in containers
+# without needing a display, unlike the regular opencv-python package.
+RUN pip install --no-cache-dir opencv-python-headless
+
 # Copy the backend code AND the BasicSR folder, keeping them as siblings
 # (main.py expects BasicSR to sit next to the backend folder, not inside it)
 COPY backend/ ./backend/
