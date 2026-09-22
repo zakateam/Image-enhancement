@@ -18,10 +18,20 @@ COPY backend/requirements.txt ./backend/requirements.txt
 # Install all Python packages your backend needs
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Explicitly make sure opencv is installed (main.py imports cv2, but it
-# wasn't listed in requirements.txt). "headless" version works in containers
-# without needing a display, unlike the regular opencv-python package.
-RUN pip install --no-cache-dir opencv-python-headless
+# Explicitly install packages that BasicSR/Real-ESRGAN commonly need but
+# weren't listed in requirements.txt (it was only tested on a computer that
+# already had these installed some other way).
+RUN pip install --no-cache-dir \
+    opencv-python-headless \
+    torchvision \
+    scipy \
+    tqdm \
+    yapf \
+    lmdb \
+    addict \
+    future \
+    requests \
+    Pillow
 
 # Copy the backend code AND the BasicSR folder, keeping them as siblings
 # (main.py expects BasicSR to sit next to the backend folder, not inside it)
