@@ -6,8 +6,15 @@ Uses:
 - Pretrained Real-ESRGAN model for larger images (> 350 px)
 
 Both models run locally on CPU.
+
+NOTE: To fit within limited server memory (free hosting tiers usually
+give 512MB), only ONE model is kept loaded in memory at a time. It's
+loaded the first time it's needed, and swapped out if a request needs
+the other one. This trades a little speed (occasionally reloading a
+model) for a much smaller memory footprint.
 """
 
+import gc
 import io
 import sys
 from pathlib import Path
@@ -105,15 +112,43 @@ def load_model(model_path: Path):
     return model
 
 
-print("=" * 60)
-print("Loading Real-ESRGAN models...")
-print("=" * 60)
+# --------------------------------------------------------------
+# Lazy model cache: only one model lives in memory at a time.
+# --------------------------------------------------------------
+_current_model = None
+_current_model_name = None
 
-ft_model = load_model(FT_MODEL_PATH)
-pretrained_model = load_model(PRETRAINED_MODEL_PATH)
+
+def get_model(name: str):
+    """
+    Return the requested model, loading it if needed.
+    If a different model is currently loaded, it is released
+    from memory first to keep peak memory usage low.
+    """
+    global _current_model, _current_model_name
+
+    if _current_model_name == name:
+        return _current_model
+
+    # A different model is loaded (or none yet) -- free it first
+    if _current_model is not None:
+        print(f"Releasing model from memory: {_current_model_name}")
+        del _current_model
+        gc.collect()
+
+    if name == "finetuned":
+        _current_model = load_model(FT_MODEL_PATH)
+    else:
+        _current_model = load_model(PRETRAINED_MODEL_PATH)
+
+    _current_model_name = name
+
+    return _current_model
+
 
 print("=" * 60)
-print("Both models are ready.")
+print("Backend starting -- models will load on first use")
+print("(kept lazy to fit within limited server memory)")
 print("=" * 60)
 
 
@@ -147,10 +182,10 @@ def enhance_image(image: Image.Image) -> Image.Image:
 
     # Select model
     if smaller_side <= THRESHOLD:
-        model = ft_model
+        model = get_model("finetuned")
         model_name = "Fine-tuned Real-ESRGAN"
     else:
-        model = pretrained_model
+        model = get_model("pretrained")
         model_name = "Pretrained Real-ESRGAN"
 
     print(
