@@ -13,25 +13,25 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy just the requirements file first (this makes rebuilds faster)
-COPY requirements.txt .
+COPY backend/requirements.txt ./backend/requirements.txt
 
 # Install all Python packages your backend needs
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Now copy the rest of your backend code (main.py, BasicSR folder, etc.)
-COPY . .
+# Copy the backend code AND the BasicSR folder, keeping them as siblings
+# (main.py expects BasicSR to sit next to the backend folder, not inside it)
+COPY backend/ ./backend/
+COPY BasicSR/ ./BasicSR/
 
 # --------------------------------------------------------------
 # Download the model weight files.
-# These are too large for GitHub, so they're hosted on Hugging Face
-# instead, and downloaded here every time the image is built.
 # --------------------------------------------------------------
-RUN mkdir -p models && \
-    curl -L "https://huggingface.co/zakateam/image-enhancement-weights/resolve/main/RealESRGAN_x4plus.pth" -o models/RealESRGAN_x4plus.pth && \
-    curl -L "https://huggingface.co/zakateam/image-enhancement-weights/resolve/main/realesrgan_finetuned_2000.pth" -o models/realesrgan_finetuned_2000.pth
+RUN mkdir -p backend/models && \
+    curl -L "https://huggingface.co/zakateam/image-enhancement-weights/resolve/main/RealESRGAN_x4plus.pth" -o backend/models/RealESRGAN_x4plus.pth && \
+    curl -L "https://huggingface.co/zakateam/image-enhancement-weights/resolve/main/realesrgan_finetuned_2000.pth" -o backend/models/realesrgan_finetuned_2000.pth
 
-# Tell Docker which port the app will run on
+WORKDIR /app/backend
+
 EXPOSE 8000
 
-# The command that actually starts your server when the container runs
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
