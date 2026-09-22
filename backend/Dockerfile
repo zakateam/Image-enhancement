@@ -38,6 +38,12 @@ RUN pip install --no-cache-dir \
 COPY backend/ ./backend/
 COPY BasicSR/ ./BasicSR/
 
+# BasicSR normally auto-generates this version.py file when properly
+# "installed" (pip install -e .). Since we're just copying the folder
+# directly, create a simple stub so the import doesn't fail.
+RUN echo "__gitsha__ = 'unknown'" > ./BasicSR/basicsr/version.py && \
+    echo "__version__ = '0.0.0'" >> ./BasicSR/basicsr/version.py
+
 # --------------------------------------------------------------
 # Download the model weight files.
 # --------------------------------------------------------------
