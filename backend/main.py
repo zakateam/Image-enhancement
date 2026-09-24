@@ -51,7 +51,7 @@ from basicsr.archs.rrdbnet_arch import RRDBNet
 
 DEVICE = torch.device("cpu")
 
-THRESHOLD = 350
+THRESHOLD = 0
 
 FT_MODEL_PATH = MODELS_PATH / "realesrgan_finetuned_2000.pth"
 PRETRAINED_MODEL_PATH = MODELS_PATH / "RealESRGAN_x4plus.pth"
