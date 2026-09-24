@@ -115,8 +115,8 @@ print("=" * 60)
 print("Loading Real-ESRGAN models...")
 print("=" * 60)
 
-ft_model = load_model(FT_MODEL_PATH)
 pretrained_model = load_model(PRETRAINED_MODEL_PATH)
+ft_model = pretrained_model  # fine-tuned model disabled
 
 print("=" * 60)
 print("Both models are ready.")
